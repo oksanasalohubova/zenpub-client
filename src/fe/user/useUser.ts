@@ -1,32 +1,19 @@
-// import { User } from 'graphql/types.generated';
 import * as GQL from './useUser.generated';
 import { useMe } from 'fe/session/useMe';
-// import { useFollowContext } from 'fe/context/follow/useFollowContext';
+import { useMemo } from 'react';
 
-export const useUser = (userId: string) => {
-  const userQ = GQL.useUserDataQuery({ variables: { username: userId } });
+export const useUser = (userName: string) => {
+  const userQ = GQL.useUserDataQuery({ variables: { username: userName } });
   const { me } = useMe();
 
   const user = userQ.data?.user;
-  const isMe = !!(me && user && me?.user?.id === user.id);
-  // const { toggleFollow } = useFollowContext(user);
+  const isMe = useMemo(() => !!(me?.users && me?.users[0] && me?.users[0].id === user?.id), [
+    me,
+    user
+  ]);
 
-  // return useMemo(() => {
-  // const user = userQ.data?.user;
-  // const totalCollections = user?.collectionFollows?.totalCount;
-  // const totalCommunities = user?.communityFollows?.totalCount;
-  // const totalUsers = user?.userFollows?.totalCount;
-  // const totalActivities = user?.outbox?.totalCount;
-  // const isMe = !!(me && user && me.user.id === user.id);
   return {
     isMe,
-    // isAdmin,
     user
-    // toggleFollow,
-    // totalCollections,
-    // totalCommunities,
-    // totalUsers,
-    // totalActivities
   };
-  // }, []);
 };

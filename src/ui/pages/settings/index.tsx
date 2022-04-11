@@ -2,36 +2,24 @@ import { Trans } from '@lingui/macro';
 import { i18nMark } from '@lingui/react';
 import { Input, Textarea } from '@rebass/forms';
 import * as React from 'react';
-import {
-  Droplet,
-
-  // Zap,
-  Flag,
-  Link,
-  Mail,
-  MapPin,
-  Monitor,
-  Settings as Sett,
-  Sliders
-} from 'react-feather';
-import { NavLink, Route, Switch } from 'react-router-dom';
+import { Droplet, Flag, Mail, Monitor, Settings as Sett, Sliders } from 'react-feather';
+import { Route, Switch, NavLink } from 'react-router-dom';
 import { Box, Flex, Text } from 'rebass/styled-components';
 import media from 'styled-media-query';
 import { FormikHook } from 'ui/@types/types';
 import Button from 'ui/elements/Button';
-// import { useHistory } from 'react-router';
 import { HomeBox, MainContainer, Wrapper, WrapperCont } from 'ui/elements/Layout';
 import DropzoneArea from 'ui/modules/DropzoneModal';
 import { Actions, ContainerForm } from 'ui/modules/Modal';
 import styled from 'ui/themes/styled';
 import { ReactElement } from 'react';
+import { Profile } from '../../../graphql/types.generated';
 
 const tt = {
   placeholders: {
     name: i18nMark('Display Name'),
-    summary: i18nMark('Please tell us a little bit about yourself...'),
-    location: i18nMark('Choose a location'),
-    website: i18nMark('Enter a URL to share more info about you')
+    displayName: i18nMark('User Name'),
+    summary: i18nMark('Please tell us a little bit about yourself...')
   }
 };
 export enum Status {
@@ -45,31 +33,27 @@ export interface SettingsLoading {
 
 export interface Props {
   status?: Status.Loaded;
-  formik: FormikHook<EditProfile>;
+  formik: FormikHook<TEditProfile>;
   sectionPaths: {
     preferences: string;
-    instance: string;
-    invites: string;
-    flags: string;
-    logs: string;
     general: string;
   };
   displayUsername: string;
   isAdmin: boolean;
   Preferences: ReactElement;
-  Instance: ReactElement;
-  Invites: ReactElement;
-  Flags: ReactElement;
-  ModerationLog: ReactElement;
+  toggleUpdatePasswordModal: () => void;
+  userProfile:
+    | ({ __typename: 'Profile' } & Pick<Profile, 'summary' | 'image' | 'icon' | 'name'>)
+    | null
+    | undefined;
 }
 
-export interface EditProfile {
+export interface TEditProfile {
   name: string;
+  displayName: string;
   summary: string;
   icon: string | File | undefined;
   image: string | File | undefined;
-  location: string;
-  website: string;
 }
 
 export interface AddEmail {
@@ -83,24 +67,29 @@ export interface EditInstance {
 export const Settings: React.FC<Props> = ({
   formik,
   Preferences,
-  Instance,
-  Invites,
-  Flags,
-  ModerationLog,
   displayUsername,
   isAdmin,
-  sectionPaths
+  sectionPaths,
+  toggleUpdatePasswordModal,
+  userProfile
 }) => {
   const onIconFileSelected = React.useCallback(
     (file: File) => formik.setValues({ ...formik.values, icon: file }),
     [formik]
   );
-  const initialIconUrl = 'string' === typeof formik.values.icon ? formik.values.icon : '';
+
+  const initialIconUrl =
+    'string' === typeof formik.values.icon
+      ? `${process.env.REACT_APP_GRAPHQL_IMG_LINK}${formik.values.icon}`
+      : '';
   const onImageFileSelected = React.useCallback(
     (file: File) => formik.setValues({ ...formik.values, image: file }),
     [formik]
   );
-  const initialImageUrl = 'string' === typeof formik.values.image ? formik.values.image : '';
+  const initialImageUrl =
+    'string' === typeof formik.values.image
+      ? `${process.env.REACT_APP_GRAPHQL_IMG_LINK}${formik.values.image}`
+      : '';
 
   return (
     <MainContainer>
@@ -111,10 +100,6 @@ export const Settings: React.FC<Props> = ({
             <SettingsWrapper>
               <Switch>
                 <Route path={sectionPaths.preferences}>{Preferences}</Route>
-                <Route path={sectionPaths.instance}>{Instance}</Route>
-                <Route path={sectionPaths.invites}>{Invites}</Route>
-                <Route path={sectionPaths.flags}>{Flags}</Route>
-                <Route path={sectionPaths.logs}>{ModerationLog}</Route>
                 <Route path={sectionPaths.general}>
                   <ProfileBox p={1} pb={2}>
                     <Hero>
@@ -138,17 +123,19 @@ export const Settings: React.FC<Props> = ({
                           </Img>
                         </WrapperHero>
                       </FlexProfile>
-                      <HeroInfo mt={2} ml={3}>
+                      <HeroInfo mt={2} ml={3} mr={3}>
+                        <CollectionContainerForm>
+                          <h2>{formik.values.name}</h2>
+                        </CollectionContainerForm>
                         <CollectionContainerForm>
                           <Input
-                            placeholder={tt.placeholders.name}
+                            placeholder={tt.placeholders.displayName}
                             disabled={formik.isSubmitting}
-                            name="name"
-                            value={formik.values.name}
+                            name="displayName"
+                            value={formik.values.displayName}
                             onChange={formik.handleChange}
                           />
                         </CollectionContainerForm>
-
                         <Username mt={1} p={2}>
                           {displayUsername}
                         </Username>
@@ -161,37 +148,12 @@ export const Settings: React.FC<Props> = ({
                             onChange={formik.handleChange}
                           />
                         </CollectionContainerForm>
-                        <Location mt={2}>
-                          <span>
-                            <MapPin strokeWidth={1} size={20} />
-                          </span>
-                          <CollectionContainerForm>
-                            <Input
-                              placeholder={tt.placeholders.location}
-                              disabled={formik.isSubmitting}
-                              name="location"
-                              value={formik.values.location}
-                              onChange={formik.handleChange}
-                            />
-                          </CollectionContainerForm>
-                        </Location>
-                        <RelevantLink mt={2}>
-                          <span>
-                            <Link strokeWidth={1} size={20} />
-                          </span>
-                          <CollectionContainerForm>
-                            <Input
-                              placeholder={tt.placeholders.website}
-                              disabled={formik.isSubmitting}
-                              name="website"
-                              value={formik.values.website}
-                              onChange={formik.handleChange}
-                            />
-                          </CollectionContainerForm>
-                        </RelevantLink>
                       </HeroInfo>
                     </Hero>
-                    <Actions sx={{ height: 'inherit !important' }}>
+                    <ActionsWrapper mt={3} mr={3} sx={{ height: 'inherit !important' }}>
+                      <Button variant="primary" onClick={toggleUpdatePasswordModal}>
+                        Update password
+                      </Button>
                       <Button
                         variant="primary"
                         isSubmitting={formik.isSubmitting}
@@ -202,18 +164,22 @@ export const Settings: React.FC<Props> = ({
                       >
                         <Trans>Save</Trans>
                       </Button>
-                    </Actions>
+                    </ActionsWrapper>
                   </ProfileBox>
                 </Route>
               </Switch>
             </SettingsWrapper>
           </Wrapper>
         </WrapperCont>
-        {/* <RepoLink variant="text" my={3} mt={2}>
-          <a href="https://gitlab.com/moodlenet/meta/-/issues" target="_blank">
+        <RepoLink variant="text" my={3} mt={2}>
+          <a
+            href="https://gitlab.com/moodlenet/meta/-/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Trans>Want to report a bug?</Trans>
           </a>
-        </RepoLink> */}
+        </RepoLink>
       </HomeBox>
     </MainContainer>
   );
@@ -223,17 +189,25 @@ const SettingsWrapper = styled(Box)`
   background: ${props => props.theme.colors.appInverse};
 `;
 
-// const RepoLink = styled(Text)`
-//   text-align: right;
-//   width: 100%;
-//   a {
-//     text-decoration: underline;
-//     color: ${props => props.theme.colors.dark};
-//     &:hover {
-//       color: ${props => props.theme.colors.darkest};
-//     }
-//   }
-// `;
+const ActionsWrapper = styled(Actions)`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  padding: 18px 18px 12px;
+`;
+
+const RepoLink = styled(Text)`
+  text-align: right;
+  width: 100%;
+  a {
+    text-decoration: underline;
+    color: ${props => props.theme.colors.dark};
+    &:hover {
+      color: ${props => props.theme.colors.darkest};
+    }
+  }
+`;
 
 const Sidebar: React.FC<{ sectionPaths: Props['sectionPaths']; isAdmin: boolean }> = ({
   sectionPaths,
@@ -275,60 +249,48 @@ const Sidebar: React.FC<{ sectionPaths: Props['sectionPaths']; isAdmin: boolean 
                   p={3}
                   sx={{ textTransform: 'capitalize', fontSize: '14px' }}
                 >
-                  {/* <Icon className="icon" mr={1}>
-                <Key size={20} />
-              </Icon> */}
                   <Text variant="suptitle">Admin</Text>
                 </Flex>
               </SectionTitle>
               <NavItem p={3}>
-                <NavLink to={sectionPaths.instance}>
-                  <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
-                    <Icon className="icon" mr={1}>
-                      <Droplet size={20} />
-                    </Icon>
-                    <Name>
-                      <Trans>Instance</Trans>
-                    </Name>
-                  </Flex>
-                </NavLink>
+                <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
+                  <Icon className="icon" mr={1}>
+                    <Droplet size={20} />
+                  </Icon>
+                  <Name>
+                    <Trans>Instance</Trans>
+                  </Name>
+                </Flex>
               </NavItem>
               <NavItem p={3}>
-                <NavLink to={sectionPaths.invites}>
-                  <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
-                    <Icon className="icon" mr={1}>
-                      <Mail size={20} />
-                    </Icon>
-                    <Name>
-                      <Trans>Invites</Trans>
-                    </Name>
-                  </Flex>
-                </NavLink>
+                <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
+                  <Icon className="icon" mr={1}>
+                    <Mail size={20} />
+                  </Icon>
+                  <Name>
+                    <Trans>Invites</Trans>
+                  </Name>
+                </Flex>
               </NavItem>
               <NavItem p={3}>
-                {/* <NavLink to={`${basePath}/reports`}> */}
-                <NavLink to={sectionPaths.flags}>
-                  <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
-                    <Icon className="icon" mr={1}>
-                      <Flag size={20} />
-                    </Icon>
-                    <Name>
-                      <Trans>Flags</Trans>
-                    </Name>
-                  </Flex>
-                </NavLink>
+                <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
+                  <Icon className="icon" mr={1}>
+                    <Flag size={20} />
+                  </Icon>
+                  <Name>
+                    <Trans>Flags</Trans>
+                  </Name>
+                </Flex>
               </NavItem>
               <NavItem p={3}>
-                <NavLink to={sectionPaths.logs}>
-                  <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
-                    <Icon className="icon" mr={1}>
-                      <Monitor size={20} />
-                    </Icon>
-                    <Name>
-                      <Trans>Moderation log</Trans>
-                    </Name>
-                  </Flex>
-                </NavLink>
+                <Flex alignItems="center" sx={{ textTransform: 'capitalize', fontSize: '14px' }}>
+                  <Icon className="icon" mr={1}>
+                    <Monitor size={20} />
+                  </Icon>
+                  <Name>
+                    <Trans>Moderation log</Trans>
+                  </Name>
+                </Flex>
               </NavItem>
             </>
           ) : null}
@@ -403,36 +365,6 @@ const ProfileBox = styled(Box)``;
 const Username = styled(Text)`
   color: ${props => props.theme.colors.mediumdark};
   font-weight: 500;
-`;
-
-const Location = styled(Flex)`
-  color: ${props => props.theme.colors.medium};
-  font-weight: 500;
-  line-height: 26px;
-  border-radius: 100px;
-  align-items: center;
-  span {
-    margin-right: 8px;
-    & svg {
-      stroke: ${props => props.theme.colors.medium};
-      vertical-align: text-bottom;
-    }
-  }
-`;
-
-const RelevantLink = styled(Flex)`
-  color: ${props => props.theme.colors.medium};
-  font-weight: 500;
-  line-height: 26px;
-  border-radius: 100px;
-  align-items: center;
-  span {
-    margin-right: 8px;
-    & svg {
-      stroke: ${props => props.theme.colors.medium};
-      vertical-align: text-bottom;
-    }
-  }
 `;
 
 const WrapperHero = styled.div`

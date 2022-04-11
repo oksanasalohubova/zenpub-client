@@ -32,6 +32,8 @@ export type Scalars = {
    * be converted to UTC if there is an offset.
  **/
   DateTime: any,
+  /** Represents an uploaded file. */
+  Upload: any,
 };
 
 /** 
@@ -1341,6 +1343,11 @@ export type IDuration = {
   unitType: TimeUnit,
 };
 
+export type ImagesUpload = {
+  icon?: Maybe<Scalars['Upload']>,
+  image?: Maybe<Scalars['Upload']>,
+};
+
 /** Mutation input structure for defining measurements. Should be nulled if not present, rather than empty. */
 export type IMeasure = {
   /** A number representing the quantity, will be paired with a unit. */
@@ -1618,6 +1625,8 @@ export type Me = {
   followed?: Maybe<Array<Maybe<Follow>>>,
   followers?: Maybe<Array<Maybe<Follow>>>,
   likeActivities?: Maybe<Array<Maybe<Activity>>>,
+  /** a bearer token used for authentication */
+  token?: Maybe<Scalars['String']>,
   user?: Maybe<User>,
   userFeed?: Maybe<Array<Maybe<Activity>>>,
   userNotifications?: Maybe<Array<Maybe<Activity>>>,
@@ -2399,13 +2408,19 @@ export type ProductionFlowItem = EconomicEvent | EconomicResource | Process;
 
 export type Profile = {
    __typename?: 'Profile',
+  icon?: Maybe<Scalars['String']>,
+  image?: Maybe<Scalars['String']>,
+  location?: Maybe<Scalars['String']>,
   name?: Maybe<Scalars['String']>,
   summary?: Maybe<Scalars['String']>,
+  website?: Maybe<Scalars['String']>,
 };
 
 export type ProfileInput = {
+  location?: Maybe<Scalars['String']>,
   name?: Maybe<Scalars['String']>,
   summary?: Maybe<Scalars['String']>,
+  website?: Maybe<Scalars['String']>,
 };
 
 /** Published requests or offers, sometimes with what is expected in return. */
@@ -2909,8 +2924,8 @@ export type RootMutationType = {
   /** 
  * Share the current user identity with a team member. This will give them full
    * access to the currently authenticated user identity. Warning: anyone you add
-   * will have admin-level access over this user identity, meaning they can post as
-   * this user, read private messages, etc.
+   * will have full access over this user identity, meaning they can post as this
+   * user, read private messages, etc.
  **/
   addTeamMember?: Maybe<Scalars['String']>,
   boost?: Maybe<Activity>,
@@ -3266,6 +3281,7 @@ export type RootMutationTypeCreateUnitArgs = {
 
 export type RootMutationTypeCreateUserArgs = {
   character: CharacterInput,
+  images?: Maybe<ImagesUpload>,
   profile: ProfileInput
 };
 
@@ -3678,7 +3694,8 @@ export type RootMutationTypeUpdateUnitArgs = {
 
 
 export type RootMutationTypeUpdateUserArgs = {
-  profile: ProfileInput
+  images?: Maybe<ImagesUpload>,
+  profile?: Maybe<ProfileInput>
 };
 
 
@@ -3733,7 +3750,7 @@ export type RootQueryType = {
   intents?: Maybe<Array<Intent>>,
   /** Get paginated list of intents */
   intentsPages: IntentsPage,
-  /** Get information about and for the current user */
+  /** Get information about and for the current account and/or user */
   me?: Maybe<Me>,
   measure?: Maybe<Measure>,
   measures?: Maybe<Array<Measure>>,
@@ -4750,10 +4767,12 @@ export type UnitUpdateParams = {
 };
 
 
+
 export type User = {
    __typename?: 'User',
   character?: Maybe<Character>,
   id?: Maybe<Scalars['ID']>,
+  isInstanceAdmin?: Maybe<Scalars['Boolean']>,
   posts?: Maybe<Array<Maybe<Post>>>,
   profile?: Maybe<Profile>,
   userActivities?: Maybe<Array<Maybe<Activity>>>,
@@ -5242,6 +5261,8 @@ export type ResolversTypes = {
   UnitCreateParams: UnitCreateParams,
   UnitResponse: ResolverTypeWrapper<UnitResponse>,
   CharacterInput: CharacterInput,
+  ImagesUpload: ImagesUpload,
+  Upload: ResolverTypeWrapper<Scalars['Upload']>,
   ProfileInput: ProfileInput,
   ValueCalculationCreateParams: ValueCalculationCreateParams,
   ValueCalculationResponse: ResolverTypeWrapper<ValueCalculationResponse>,
@@ -5446,6 +5467,8 @@ export type ResolversParentTypes = {
   UnitCreateParams: UnitCreateParams,
   UnitResponse: UnitResponse,
   CharacterInput: CharacterInput,
+  ImagesUpload: ImagesUpload,
+  Upload: Scalars['Upload'],
   ProfileInput: ProfileInput,
   ValueCalculationCreateParams: ValueCalculationCreateParams,
   ValueCalculationResponse: ValueCalculationResponse,
@@ -5847,6 +5870,7 @@ export type MeResolvers<ContextType = any, ParentType extends ResolversParentTyp
   followed?: Resolver<Maybe<Array<Maybe<ResolversTypes['Follow']>>>, ParentType, ContextType, MeFollowedArgs>,
   followers?: Resolver<Maybe<Array<Maybe<ResolversTypes['Follow']>>>, ParentType, ContextType, MeFollowersArgs>,
   likeActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, MeLikeActivitiesArgs>,
+  token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>,
   userFeed?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, MeUserFeedArgs>,
   userNotifications?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, MeUserNotificationsArgs>,
@@ -6079,8 +6103,12 @@ export type ProductionFlowItemResolvers<ContextType = any, ParentType extends Re
 };
 
 export type ProfileResolvers<ContextType = any, ParentType extends ResolversParentTypes['Profile'] = ResolversParentTypes['Profile']> = {
+  icon?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
+  image?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
+  location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
   summary?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
+  website?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>,
 };
 
 export type ProposalResolvers<ContextType = any, ParentType extends ResolversParentTypes['Proposal'] = ResolversParentTypes['Proposal']> = {
@@ -6334,7 +6362,7 @@ export type RootMutationTypeResolvers<ContextType = any, ParentType extends Reso
   updateSettlement?: Resolver<Maybe<ResolversTypes['SettlementResponse']>, ParentType, ContextType, RequireFields<RootMutationTypeUpdateSettlementArgs, 's0ettlement'>>,
   updateSpatialThing?: Resolver<Maybe<ResolversTypes['SpatialThingResponse']>, ParentType, ContextType, RequireFields<RootMutationTypeUpdateSpatialThingArgs, 'spatialThing'>>,
   updateUnit?: Resolver<Maybe<ResolversTypes['UnitResponse']>, ParentType, ContextType, RequireFields<RootMutationTypeUpdateUnitArgs, 'unit'>>,
-  updateUser?: Resolver<Maybe<ResolversTypes['Me']>, ParentType, ContextType, RequireFields<RootMutationTypeUpdateUserArgs, 'profile'>>,
+  updateUser?: Resolver<Maybe<ResolversTypes['Me']>, ParentType, ContextType, RootMutationTypeUpdateUserArgs>,
   updateValueCalculation?: Resolver<Maybe<ResolversTypes['ValueCalculationResponse']>, ParentType, ContextType, RequireFields<RootMutationTypeUpdateValueCalculationArgs, 'valueCalculation'>>,
 };
 
@@ -6546,6 +6574,10 @@ export type UnitsPageResolvers<ContextType = any, ParentType extends ResolversPa
   totalCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>,
 };
 
+export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
+  name: 'Upload'
+}
+
 export interface UriScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['URI'], any> {
   name: 'URI'
 }
@@ -6553,6 +6585,7 @@ export interface UriScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes[
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
   character?: Resolver<Maybe<ResolversTypes['Character']>, ParentType, ContextType>,
   id?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>,
+  isInstanceAdmin?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>,
   posts?: Resolver<Maybe<Array<Maybe<ResolversTypes['Post']>>>, ParentType, ContextType, UserPostsArgs>,
   profile?: Resolver<Maybe<ResolversTypes['Profile']>, ParentType, ContextType>,
   userActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, UserUserActivitiesArgs>,
@@ -6695,6 +6728,7 @@ export type Resolvers<ContextType = any> = {
   Unit?: UnitResolvers<ContextType>,
   UnitResponse?: UnitResponseResolvers<ContextType>,
   UnitsPage?: UnitsPageResolvers<ContextType>,
+  Upload?: GraphQLScalarType,
   URI?: GraphQLScalarType,
   User?: UserResolvers<ContextType>,
   ValueCalculation?: ValueCalculationResolvers<ContextType>,
